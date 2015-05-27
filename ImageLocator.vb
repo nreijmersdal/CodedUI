@@ -11,7 +11,7 @@ Namespace Roser.CodedUI.Common
         ''' <summary>
         ''' Return Point of image on screen
         ''' </summary>
-        Public Shared Function OnScreen(image As Bitmap, Optional retry As Integer = 5) As Point
+        Public Shared Function Location(image As Bitmap, Optional retry As Integer = 5) As Point
             Dim p As Point
             For index As Integer = 1 To retry
                 p = Search(GetScreen, image)
@@ -27,6 +27,17 @@ Namespace Roser.CodedUI.Common
             Return New Point(p.X + CInt((image.Width / 2)), p.Y + CInt((image.Height / 2)))
         End Function
 
+        ''' <summary>
+        ''' Return if image is on screen
+        ''' </summary>
+        Public Shared Function OnScreen(image As Bitmap) As Boolean
+            Dim p = Search(GetScreen, image)
+            If p = Nothing Then
+                Return True
+            Else
+                Return False
+            End If
+        End Function
 
         ''' <summary>
         ''' Drag first image to the second image
@@ -34,9 +45,9 @@ Namespace Roser.CodedUI.Common
         Public Shared Sub Drag(fromImage As Bitmap, toImage As Bitmap)
             Mouse.MouseDragSpeed = 1000
             Mouse.MouseMoveSpeed = 1000
-            Mouse.Move(OnScreen(fromImage))
+            Mouse.Move(Location(fromImage))
             Mouse.StartDragging()
-            Mouse.StopDragging(OnScreen(toImage))
+            Mouse.StopDragging(Location(toImage))
         End Sub
 
         ''' <summary>
@@ -97,6 +108,7 @@ Namespace Roser.CodedUI.Common
             sw = src.Width - bw      ' limit scan to only what we need. the extra corner
             sh = src.Height - bh     ' point we need is taken care of in the loop itself.
 
+            bx = 0 : by = 0
             ' Scan source for bitmap
             For y = 0 To sh
                 sy = y * sStride
@@ -144,8 +156,10 @@ Namespace Roser.CodedUI.Common
                 If p <> Nothing Then Exit For
             Next
 
-            Return p
+            bmpBuff = Nothing
+            srcBuff = Nothing
 
+            Return p
         End Function
 
         ''' <summary>
@@ -154,12 +168,10 @@ Namespace Roser.CodedUI.Common
         ''' <returns></returns>
         ''' <remarks>Created because UITestControl.Desktop.CaptureImage only captures a single screen</remarks>
         Public Shared Function GetScreen() As Bitmap
-            Dim image As Bitmap = New Bitmap(Screen.AllScreens.Sum(Function(s As Screen) s.Bounds.Width), Screen.AllScreens.Max(Function(s As Screen) s.Bounds.Height))
+            GC.Collect() ' When used in loops, the bitmaps might not be cleaned correctly resulting an a System.ArgumentException: Parameter is not valid.. error
+            Dim image As New Bitmap(Screen.AllScreens.Sum(Function(s As Screen) s.Bounds.Width), Screen.AllScreens.Max(Function(s As Screen) s.Bounds.Height))
             Dim gfx As Graphics = Graphics.FromImage(image)
-
-            ' Capture fullscreen, also multiple screens
             gfx.CopyFromScreen(SystemInformation.VirtualScreen.X, SystemInformation.VirtualScreen.Y, 0, 0, SystemInformation.VirtualScreen.Size)
-
             Return image
         End Function
 
