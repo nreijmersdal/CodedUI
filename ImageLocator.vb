@@ -31,12 +31,12 @@ Namespace Roser.CodedUI.Common
         ''' Return if image is on screen
         ''' </summary>
         Public Shared Function OnScreen(image As Bitmap) As Boolean
-            Dim p = Search(GetScreen, image)
-            If p = Nothing Then
-                Return True
-            Else
+            Try
+                Location(image, 1)
+                Return true
+            Catch
                 Return False
-            End If
+            End Try
         End Function
 
         ''' <summary>
